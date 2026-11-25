@@ -12,7 +12,8 @@ struct NeoWidgetApp: App {
                 .environmentObject(store)
                 .onOpenURL { url in
                     // Handle widgetURL click from desktop widget
-                    if let slotId = url.queryParameters?["slot"] {
+                    if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                       let slotId = components.queryItems?.first(where: { $0.name == "slot" })?.value {
                         store.currentSlotId = slotId
                     }
                 }
@@ -55,18 +56,24 @@ class WidgetStore: ObservableObject {
     
     func save() {
         // Save to ~/Library/Application Support/NeoWidget/
-        try? FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true)
-        let data = try? JSONEncoder().encode(slots)
-        try? data?.write(to: containerURL.appendingPathComponent("data.json"))
-        WidgetCenter.shared.reloadAllTimelines()
+        do {
+            try FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true)
+            let data = try JSONEncoder().encode(slots)
+            try data.write(to: containerURL.appendingPathComponent("data.json"))
+            WidgetCenter.shared.reloadAllTimelines()
+        } catch {
+            print("Failed to save widget data: \(error)")
+        }
     }
     
     func exportCurrent() {
         // Export .neowidget logic
+        print("Exporting .neowidget for \(currentSlotId)")
     }
     
     func importCurrent() {
         // Import .neowidget logic
+        print("Importing .neowidget")
     }
 }
 
