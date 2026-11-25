@@ -1,0 +1,43 @@
+name: Build macOS Native DMG
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build App (Apple Silicon arm64)
+        run: |
+          xcodebuild -project NeoWidget.xcodeproj -scheme NeoWidget -configuration Release -arch arm64 -derivedDataPath build CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Package DMG
+        run: |
+          mkdir -p dist
+          APP_PATH="build/Build/Products/Release/NeoWidget.app"
+          DMG_PATH="dist/NeoWidget.dmg"
+          if [ -d "$APP_PATH" ]; then
+            hdiutil create -volname "NeoWidget" -srcfolder "$APP_PATH" -ov -format UDBZ "$DMG_PATH"
+          else
+            echo "Error: App bundle not found at $APP_PATH"
+            ls -la build/Build/Products/Release/
+            exit 1
+          fi
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neowidget-native-dmg
+          path: dist/*.dmg
