@@ -16,16 +16,26 @@ jobs:
       - name: Setup Xcode
         run: xcodebuild -version
 
+      - name: Create Xcode Project from Swift Package
+        run: |
+          swift package generate-xcodeproj
+
       - name: Build App (Apple Silicon arm64)
         run: |
-          xcodebuild -scheme NeoWidget -destination 'platform=macOS,arch=arm64' clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO
+          xcodebuild -project NeoWidget.xcodeproj -scheme NeoWidget -destination 'platform=macOS,arch=arm64' clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CONFIGURATION=Release
 
       - name: Package DMG
         run: |
           mkdir -p dist
           APP_PATH="build/Release/NeoWidget.app"
           DMG_PATH="dist/NeoWidget.dmg"
-          hdiutil create -volname "NeoWidget" -srcfolder "$APP_PATH" -ov -format UDBZ "$DMG_PATH"
+          # Ensure the app bundle exists
+          if [ -d "$APP_PATH" ]; then
+            hdiutil create -volname "NeoWidget" -srcfolder "$APP_PATH" -ov -format UDBZ "$DMG_PATH"
+          else
+            echo "Error: App bundle not found at $APP_PATH"
+            exit 1
+          fi
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
