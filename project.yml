@@ -45,3 +45,11 @@ targets:
       BASE_SDK: macosx14.0
       SWIFT_VERSION: "5.9"
       ARCHS: arm64
+
+schemes:
+  NeoWidget:
+    shared: true
+    build:
+      targets:
+        NeoWidget: all
+        NeoWidgetExtension: all

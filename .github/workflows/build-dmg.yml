@@ -21,6 +21,7 @@ jobs:
 
       - name: Build NeoWidget.app
         run: |
+          xcodebuild -project NeoWidget.xcodeproj -list
           xcodebuild \
             -project NeoWidget.xcodeproj \
             -scheme NeoWidget \
