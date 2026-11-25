@@ -1,0 +1,34 @@
+name: Build macOS Native DMG
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        run: xcodebuild -version
+
+      - name: Build App (Apple Silicon arm64)
+        run: |
+          xcodebuild -scheme NeoWidget -destination 'platform=macOS,arch=arm64' clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO
+
+      - name: Package DMG
+        run: |
+          mkdir -p dist
+          APP_PATH="build/Release/NeoWidget.app"
+          DMG_PATH="dist/NeoWidget.dmg"
+          hdiutil create -volname "NeoWidget" -srcfolder "$APP_PATH" -ov -format UDBZ "$DMG_PATH"
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neowidget-native-dmg
+          path: dist/*.dmg
