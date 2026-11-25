@@ -1,4 +1,4 @@
-name: Build DMG
+name: Build macOS Native DMG
 
 on:
   push:
@@ -13,19 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Setup Xcode
+        run: xcodebuild -version
 
-      - name: Install dependencies
-        run: npm install
+      - name: Build App (Apple Silicon arm64)
+        run: |
+          xcodebuild -scheme NeoWidget -destination 'platform=macOS,arch=arm64' clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO
 
-      - name: Build DMG (Apple Silicon arm64)
-        run: npx electron-builder --mac dmg --arm64
+      - name: Package DMG
+        run: |
+          mkdir -p dist
+          APP_PATH="build/Release/NeoWidget.app"
+          DMG_PATH="dist/NeoWidget.dmg"
+          hdiutil create -volname "NeoWidget" -srcfolder "$APP_PATH" -ov -format UDBZ "$DMG_PATH"
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: neowidget-dmg
+          name: neowidget-native-dmg
           path: dist/*.dmg
