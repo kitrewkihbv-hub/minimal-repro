@@ -54,7 +54,8 @@ struct NeoWidgetSmall: Widget {
         }
         .configurationDisplayName("NeoWidget Slot")
         .description("KWGT-style macOS Widget (Small)")
-        .supportedFamilies([.accessoryCircular, .accessoryCorner, .accessoryInline, .accessoryRectangular, .systemSmall])
+        // macOS WidgetKit only supports system families.
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
     }
 }
 
@@ -132,8 +133,16 @@ struct SlotEntity: AppEntity, Identifiable {
     var id: String { identifier }
     let identifier: String
     let displayString: String
-    
-    static var typeDisplayString: LocalizedStringResource = "Slot"
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Widget Slot"
+    static var defaultQuery = SlotQuery()
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(name)")
+    }
+
+    var name: String { displayString }
+
     static var allSlots: [SlotEntity] = [
         SlotEntity(identifier: "Slot 1", displayString: "Slot 1: Tall Neon Cyber Clock"),
         SlotEntity(identifier: "Slot 2", displayString: "Slot 2: Ultra-Long Vertical Digital Clock"),
@@ -144,12 +153,20 @@ struct SlotEntity: AppEntity, Identifiable {
         SlotEntity(identifier: "Slot 7", displayString: "Slot 7: Minimal Analog Neon Clock"),
         SlotEntity(identifier: "Slot 8", displayString: "Slot 8: All-in-One Cyber Dashboard")
     ]
-    
-    static func entities(for identifiers: [String]) async throws -> [SlotEntity] {
-        return allSlots.filter { identifiers.contains($0.identifier) }
+}
+
+struct SlotQuery: EntityQuery {
+    typealias Entity = SlotEntity
+
+    func entities(for identifiers: [SlotEntity.ID]) async throws -> [SlotEntity] {
+        SlotEntity.allSlots.filter { identifiers.contains($0.identifier) }
     }
-    
-    static var defaultQuery: some EntityQuery {
-        StaticEntityQuery(allSlots)
+
+    func suggestedEntities() async throws -> [SlotEntity] {
+        SlotEntity.allSlots
+    }
+
+    func defaultResult() async throws -> [SlotEntity] {
+        try await suggestedEntities()
     }
 }
