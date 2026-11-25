@@ -20,8 +20,8 @@ targets:
     platform: macOS
     deploymentTarget: "14.0"
     sources:
-      - Sources/NeoWidget
-      - Sources/Shared
+      - path: Sources/NeoWidget
+      - path: Sources/Shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.neowidget.app
@@ -37,8 +37,8 @@ targets:
     platform: macOS
     deploymentTarget: "14.0"
     sources:
-      - Sources/NeoWidgetExtension
-      - Sources/Shared
+      - path: Sources/NeoWidgetExtension
+      - path: Sources/Shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.neowidget.app.extension
@@ -47,6 +47,10 @@ targets:
         MARKETING_VERSION: 1.0
         SKIP_INSTALL: YES
     info:
+      # XcodeGen's Plist spec requires an explicit `path:` — a bare
+      # `properties:`-only map fails with: Decoding failed at "path"
+      # XcodeGen generates the Info.plist at this path on `generate`.
+      path: Sources/NeoWidgetExtension/Info.plist
       properties:
         CFBundleDisplayName: NeoWidgetExtension
         CFBundleShortVersionString: "1.0"
