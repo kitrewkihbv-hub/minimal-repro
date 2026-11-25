@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desktop Widget Slot</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: transparent;
+      user-select: none;
+      -webkit-app-region: drag;
+    }
+    #canvas {
+      width: 100%; height: 100%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .empty-prompt {
+      color: rgba(0, 255, 255, 0.5);
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      pointer-events: none;
+      text-shadow: 0 0 5px #0ff;
+    }
+    .widget-element {
+      position: absolute;
+      -webkit-app-region: no-drag;
+      cursor: move;
+    }
+    /* 8-direction handles */
+    .handle {
+      position: absolute;
+      width: 10px; height: 10px;
+      background: #0ff;
+      border: 1px solid #fff;
+      box-shadow: 0 0 5px #0ff;
+    }
+    .nw { top: -5px; left: -5px; cursor: nwse-resize; }
+    .ne { top: -5px; right: -5px; cursor: nesw-resize; }
+    .sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+    .se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+    .n { top: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .e { right: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .w { left: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+  </style>
+</head>
+<body>
+  <div id="canvas">
+    <div class="empty-prompt" id="prompt">Tap to Edit / Load Preset</div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    let slotId = '';
+    let config = null;
+
+    ipcRenderer.on('slot-initialized', (event, data) => {
+      slotId = data.slotId;
+      ipcRenderer.send('slot-clicked', slotId); // Auto trigger editor for demo or wait for click
+    });
+
+    ipcRenderer.on('config-updated', (event, newConfig) => {
+      config = newConfig;
+      renderWidget();
+    });
+
+    document.body.addEventListener('click', () => {
+      ipcRenderer.send('slot-clicked', slotId);
+    });
+
+    function renderWidget() {
+      const canvas = document.getElementById('canvas');
+      const prompt = document.getElementById('prompt');
+      canvas.innerHTML = '';
+      if (!config || !config.elements || config.elements.length === 0) {
+        prompt.style.display = 'block';
+        return;
+      }
+      prompt.style.display = 'none';
+
+      config.elements.forEach(el => {
+        const div = document.createElement('div');
+        div.className = 'widget-element';
+        div.style.left = el.x + 'px';
+        div.style.top = el.y + 'px';
+        div.style.width = el.width + 'px';
+        div.style.height = el.height + 'px';
+        div.style.zIndex = el.zIndex || 1;
+        div.style.transform = `scale(${el.scaleX || 1}, ${el.scaleY || 1})`;
+        
+        // Neon styling
+        if (el.neon) {
+          div.style.boxShadow = `0 0 ${el.neon.blur}px ${el.neon.color}, 0 0 ${el.neon.intensity}px ${el.neon.color}`;
+          div.style.textShadow = `0 0 ${el.neon.blur}px ${el.neon.color}`;
+        }
+        if (el.glass) {
+          div.style.backdropFilter = `blur(${el.glass.blur}px)`;
+          div.style.background = el.glass.color;
+        }
+        
+        // Content
+        if (el.type === 'clock') {
+          div.innerHTML = `<span id="clock-${el.id}">${new Date().toLocaleTimeString()}</span>`;
+          setInterval(() => {
+            document.getElementById(`clock-${el.id}`).innerText = new Date().toLocaleTimeString();
+          }, 1000);
+        } else if (el.type === 'text') {
+          div.innerText = el.content;
+        } else if (el.type === 'media') {
+          div.innerText = '🎵 Loading Apple Music/Spotify...';
+          // osascript integration would be handled via IPC in production
+        } else if (el.type === 'weather') {
+          div.innerText = '☁️ Loading Weather...';
+          // Open-Meteo API via IPC
+        }
+
+        // Add handles (simplified for demo)
+        const handles = ['nw','ne','sw','se','n','s','e','w'];
+        handles.forEach(h => {
+          const handle = document.createElement('div');
+          handle.className = `handle ${h}`;
+          div.appendChild(handle);
+        });
+
+        canvas.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>

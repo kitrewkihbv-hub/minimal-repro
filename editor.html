@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NeoWidget Studio Editor</title>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #111; color: #fff; display: flex; height: 100vh; }
+    .sidebar { width: 250px; background: #222; padding: 15px; border-right: 1px solid #444; overflow-y: auto; }
+    .main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; }
+    .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .preset-card { background: #333; padding: 10px; border: 1px solid #555; cursor: pointer; text-align: center; font-size: 12px; transition: 0.2s; }
+    .preset-card:hover { border-color: #0ff; box-shadow: 0 0 10px #0ff; }
+    .canvas-preview { flex: 1; background: #000; border: 2px solid #444; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 10px; margin-bottom: 15px; }
+    button { background: #444; color: #fff; border: none; padding: 8px 15px; cursor: pointer; }
+    button:hover { background: #0ff; color: #000; }
+    .neon-sliders { background: #222; padding: 10px; border-radius: 5px; margin-top: 10px; }
+    input[type="range"] { width: 100%; }
+    .font-select { width: 100%; margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h3>Preset Library</h3>
+    <div class="preset-grid" id="presetLibrary">
+      <!-- 8 Built-in Presets -->
+      <div class="preset-card" data-preset="neon-clock">Tall Neon Cyber Clock</div>
+      <div class="preset-card" data-preset="vertical-digital">Ultra-Long Vertical Digital Clock</div>
+      <div class="preset-card" data-preset="media-player">Glass Apple Music/Spotify Player</div>
+      <div class="preset-card" data-preset="weather-card">Neon Weather & Forecast Card</div>
+      <div class="preset-card" data-preset="hacker-monitor">Retro Hacker System Monitor</div>
+      <div class="preset-card" data-preset="polaroid">Aesthetic Polaroid Photo Frame</div>
+      <div class="preset-card" data-preset="analog-neon">Minimalist Analog Neon Clock</div>
+      <div class="preset-card" data-preset="cyber-dashboard">All-in-One Cyber Dashboard</div>
+    </div>
+    
+    <h3>Import/Export</h3>
+    <button onclick="exportNeoWidget()">Export .neowidget</button>
+    <button onclick="importNeoWidget()">Import .neowidget</button>
+
+    <h3>Neon Engine</h3>
+    <div class="neon-sliders">
+      <label>Glow Color</label>
+      <input type="color" id="neonColor" value="#00ffff">
+      <label>Blur Radius</label>
+      <input type="range" id="neonBlur" min="0" max="50" value="10">
+      <label>Intensity</label>
+      <input type="range" id="neonIntensity" min="1" max="10" value="5">
+      <label>Font</label>
+      <select class="font-select" id="fontSelect">
+        <option value="Courier New">Cyberpunk (Courier)</option>
+        <option value="Impact">Condensed Tall</option>
+        <option value="Pixel">Pixel Art</option>
+        <option value="Arial">Geometric</option>
+        <option value="Georgia">Serif</option>
+        <option value="Brush Script MT">Script</option>
+        <option value="Consolas">Monospace</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="controls">
+      <span id="slotTitle">Slot: Loading...</span>
+      <button onclick="addElement('clock')">+ Clock</button>
+      <button onclick="addElement('text')">+ Text</button>
+      <button onclick="addElement('media')">+ Media Player</button>
+      <button onclick="addElement('weather')">+ Weather</button>
+    </div>
+    <div class="canvas-preview" id="preview">
+      <!-- Live preview rendered here -->
+    </div>
+  </div>
+
+  <script>
+    let currentSlotId = '';
+    let currentConfig = { elements: [] };
+
+    window.api.receive('editor-ready', (event, data) => {
+      currentSlotId = data.slotId;
+      document.getElementById('slotTitle').innerText = `Slot: ${currentSlotId}`;
+      if (data.config) {
+        currentConfig = data.config;
+        renderPreview();
+      }
+    });
+
+    // Preset Loading
+    document.querySelectorAll('.preset-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const preset = card.dataset.preset;
+        loadPreset(preset);
+      });
+    });
+
+    function loadPreset(name) {
+      // Mock preset templates based on requirement
+      const templates = {
+        'neon-clock': { elements: [{ type: 'clock', x: 50, y: 50, width: 200, height: 400, scaleX: 1, scaleY: 2, neon: { color: '#0ff', blur: 15, intensity: 8 }, content: '00:00' }] },
+        'vertical-digital': { elements: [{ type: 'clock', x: 20, y: 20, width: 50, height: 500, scaleX: 0.5, scaleY: 3, neon: { color: '#f0f', blur: 10, intensity: 7 }, content: '00:00' }] },
+        'media-player': { elements: [{ type: 'media', x: 50, y: 50, width: 300, height: 150, glass: { color: 'rgba(255,255,255,0.1)', blur: 10 }, content: 'Track Title - Artist' }] },
+        'weather-card': { elements: [{ type: 'weather', x: 50, y: 50, width: 200, height: 150, neon: { color: '#00f', blur: 10, intensity: 5 }, content: '22°C - Sunny' }] },
+        'hacker-monitor': { elements: [{ type: 'text', x: 20, y: 20, width: 360, height: 200, neon: { color: '#0f0', blur: 5, intensity: 3 }, content: 'CPU: 12% | RAM: 4.2GB | BAT: 88%' }] },
+        'polaroid': { elements: [{ type: 'image', x: 50, y: 50, width: 150, height: 180, glass: { color: 'rgba(255,255,255,0.9)', blur: 0 }, content: 'photo.png' }] },
+        'analog-neon': { elements: [{ type: 'clock', x: 100, y: 100, width: 200, height: 200, neon: { color: '#f00', blur: 20, intensity: 9 }, content: 'Analog' }] },
+        'cyber-dashboard': { elements: [
+          { type: 'clock', x: 20, y: 20, width: 100, height: 50, neon: { color: '#0ff', blur: 5, intensity: 5 } },
+          { type: 'weather', x: 150, y: 20, width: 100, height: 50, neon: { color: '#00f', blur: 5, intensity: 5 } },
+          { type: 'media', x: 20, y: 100, width: 280, height: 100, glass: { color: 'rgba(0,0,0,0.5)', blur: 10 } }
+        ] }
+      };
+      currentConfig = templates[name] || { elements: [] };
+      window.api.send('update-slot', { slotId: currentSlotId, config: currentConfig });
+      renderPreview();
+    }
+
+    function renderPreview() {
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+      currentConfig.elements.forEach(el => {
+        const div = document.createElement('div');
+        div.style.position = 'absolute';
+        div.style.left = el.x + 'px';
+        div.style.top = el.y + 'px';
+        div.style.width = el.width + 'px';
+        div.style.height = el.height + 'px';
+        div.style.transform = `scale(${el.scaleX || 1}, ${el.scaleY || 1})`;
+        div.style.zIndex = el.zIndex || 1;
+        
+        if (el.neon) {
+          div.style.boxShadow = `0 0 ${el.neon.blur}px ${el.neon.color}, 0 0 ${el.neon.intensity}px ${el.neon.color}`;
+          div.style.textShadow = `0 0 ${el.neon.blur}px ${el.neon.color}`;
+          div.style.color = el.neon.color;
+        }
+        if (el.glass) {
+          div.style.backdropFilter = `blur(${el.glass.blur}px)`;
+          div.style.background = el.glass.color;
+          div.style.borderRadius = '10px';
+        }
+
+        div.innerText = el.content || el.type;
+        preview.appendChild(div);
+      });
+    }
+
+    function addElement(type) {
+      const newEl = {
+        id: Date.now(),
+        type: type,
+        x: 50, y: 50, width: 150, height: 100,
+        scaleX: 1, scaleY: 1, zIndex: 1,
+        content: type === 'clock' ? '00:00' : type === 'text' ? 'New Text' : type === 'media' ? 'Playing...' : '22°C',
+        neon: { color: document.getElementById('neonColor').value, blur: parseInt(document.getElementById('neonBlur').value), intensity: parseInt(document.getElementById('neonIntensity').value) },
+        font: document.getElementById('fontSelect').value
+      };
+      currentConfig.elements.push(newEl);
+      window.api.send('update-slot', { slotId: currentSlotId, config: currentConfig });
+      renderPreview();
+    }
+
+    function exportNeoWidget() {
+      const path = require('electron').remote ? require('electron').remote.app.getPath('desktop') + '/widget.neowidget' : '/tmp/widget.neowidget';
+      window.api.send('export-neowidget', { slotId: currentSlotId, filePath: path });
+      alert('Exported to ' + path);
+    }
+
+    function importNeoWidget() {
+      // In a real app, use dialog.showOpenDialog
+      alert('Import dialog would open here. Select .neowidget file.');
+      // Mock import
+      loadPreset('neon-clock');
+    }
+  </script>
+</body>
+</html>
