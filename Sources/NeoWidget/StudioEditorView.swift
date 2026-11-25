@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 #if canImport(NeoWidgetShared)
 import NeoWidgetShared
 #endif
@@ -62,12 +63,16 @@ struct StudioEditorView: View {
                 
                 if let config = store.slots[store.currentSlotId] {
                     ForEach(config.elements) { element in
+                        let isSelected = element.id == selectedElementId
                         ElementView(element: element)
                             .position(x: 200, y: 200) // Simplified drag/stretch logic
-                            .scaleEffect(x: element.scaleX, y: element.scaleY)
-                            .shadow(color: element.neonColor?.color ?? .clear, radius: 15, x: 0, y: 0)
-                            .blur(radius: element.glassBlur)
-                            .zIndex(Double(element.zIndex))
+                            .scaleEffect(
+                                x: isSelected ? scaleX : element.scaleX,
+                                y: isSelected ? scaleY : element.scaleY
+                            )
+                            .shadow(color: (isSelected ? neonColor : (element.neonColor?.color ?? .clear)), radius: 15, x: 0, y: 0)
+                            .blur(radius: isSelected ? glassBlur : element.glassBlur)
+                            .zIndex(Double(isSelected ? zIndex : element.zIndex))
                             .onTapGesture {
                                 selectedElementId = element.id
                                 // Sync sliders
@@ -81,8 +86,9 @@ struct StudioEditorView: View {
                 }
                 
                 // 8-Direction Handles (Visual Overlay for selected element)
-                if let selectedId = selectedElementId, let config = store.slots[store.currentSlotId], let el = config.elements.first(where: { $0.id == selectedId }) {
+                if let selectedId = selectedElementId, let config = store.slots[store.currentSlotId], config.elements.contains(where: { $0.id == selectedId }) {
                     HandlesOverlay(scaleX: $scaleX, scaleY: $scaleY)
+                        .zIndex(Double(zIndex) + 1)
                 }
             }
             .onDrop(of: [.fileURL], isTargeted: nil) { providers in
@@ -93,6 +99,16 @@ struct StudioEditorView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button("Apply to Desktop Widget") {
+                    if let selectedId = selectedElementId,
+                       var config = store.slots[store.currentSlotId],
+                       let index = config.elements.firstIndex(where: { $0.id == selectedId }) {
+                        config.elements[index].scaleX = scaleX
+                        config.elements[index].scaleY = scaleY
+                        config.elements[index].glassBlur = glassBlur
+                        config.elements[index].zIndex = zIndex
+                        config.elements[index].neonColor = CodableColor(neonColor)
+                        store.slots[store.currentSlotId] = config
+                    }
                     store.save()
                 }
             }
