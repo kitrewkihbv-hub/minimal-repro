@@ -8,9 +8,6 @@ options:
 
 settings:
   base:
-    CODE_SIGN_IDENTITY: "-"
-    CODE_SIGNING_REQUIRED: NO
-    CODE_SIGNING_ALLOWED: NO
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
 
@@ -25,12 +22,35 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.neowidget.app
-        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_NAME: NeoWidget
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Sources/NeoWidget/Info.plist
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_APP_SANDBOX: NO
+        COMBINE_HIDPI_IMAGES: YES
+    info:
+      path: Sources/NeoWidget/Info.plist
+      properties:
+        CFBundleName: NeoWidget
+        CFBundleDisplayName: NeoWidget
+        CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
+        CFBundleExecutable: "$(EXECUTABLE_NAME)"
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
+        NSHumanReadableCopyright: "Copyright © 2026 NeoWidget"
+        CFBundleURLTypes:
+          - CFBundleURLName: com.neowidget.app
+            CFBundleURLSchemes:
+              - neowidget
     dependencies:
       - target: NeoWidgetExtension
         embed: true
+        codeSign: true
 
   NeoWidgetExtension:
     type: app-extension
@@ -42,19 +62,25 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.neowidget.app.extension
-        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_NAME: NeoWidgetExtension
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Sources/NeoWidgetExtension/Info.plist
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0
         SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_APP_SANDBOX: NO
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
     info:
-      # XcodeGen's Plist spec requires an explicit `path:` — a bare
-      # `properties:`-only map fails with: Decoding failed at "path"
-      # XcodeGen generates the Info.plist at this path on `generate`.
       path: Sources/NeoWidgetExtension/Info.plist
       properties:
         CFBundleDisplayName: NeoWidgetExtension
+        CFBundleName: NeoWidgetExtension
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
+        CFBundlePackageType: XPC!
+        CFBundleExecutable: "$(EXECUTABLE_NAME)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
