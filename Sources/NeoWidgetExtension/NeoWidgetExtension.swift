@@ -49,7 +49,7 @@ struct NeoWidgetProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: SelectSlotIntent, in context: Context) async -> NeoWidgetEntry {
-        let slotId = configuration.slot?.identifier ?? "Slot 1"
+        let slotId = (configuration.slot ?? SlotEntity.defaultSlot).identifier
         let store = WidgetStore()
         let config = store.slots[slotId] ?? NeoPresets.defaultSlots()[slotId]
         let provider = LiveDataProvider.shared
@@ -58,7 +58,7 @@ struct NeoWidgetProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: SelectSlotIntent, in context: Context) async -> Timeline<NeoWidgetEntry> {
-        let slotId = configuration.slot?.identifier ?? "Slot 1"
+        let slotId = (configuration.slot ?? SlotEntity.defaultSlot).identifier
         let store = WidgetStore()
         let config = store.slots[slotId] ?? NeoPresets.defaultSlots()[slotId]
 
@@ -159,7 +159,7 @@ struct SelectSlotIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Select NeoWidget Slot"
     static var description = IntentDescription("Choose which NeoWidget slot to display on your desktop.")
 
-    @Parameter(title: "Slot", default: SlotEntity.defaultSlot)
+    @Parameter(title: "Slot")
     var slot: SlotEntity?
 }
 

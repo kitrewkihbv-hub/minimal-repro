@@ -59,7 +59,7 @@ public struct ElementRenderer: View {
     private var content: some View {
         switch element.type {
         case .clock:
-            clockView
+            clockView()
         case .analogClock:
             AnalogClockView(element: element, date: date)
         case .media:
@@ -84,7 +84,7 @@ public struct ElementRenderer: View {
     }
 
     @ViewBuilder
-    private func clockView: some View {
+    private func clockView() -> some View {
         let txt = resolved(element.content.isEmpty ? "$df(hh:mm)$" : element.content)
         Text(txt)
             .font(customFont(name: element.fontName, size: element.fontSize, weight: element.swiftUIFontWeight))
