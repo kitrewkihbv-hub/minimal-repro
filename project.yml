@@ -13,7 +13,9 @@ targets:
     platform: macOS
     deploymentTarget: "14.0"
     bundleId: com.neowidget.app
-    sources: [Sources/NeoWidget]
+    sources:
+      - Sources/NeoWidget
+      - Sources/Shared
     resources: [Sources/NeoWidget/Resources]
     dependencies:
       - target: NeoWidgetExtension
@@ -26,12 +28,14 @@ targets:
       SWIFT_VERSION: "5.9"
       ARCHS: arm64
   - name: NeoWidgetExtension
-    type: appExtension
+    type: app-extension
     platform: macOS
     deploymentTarget: "14.0"
     bundleId: com.neowidget.app.extension
     extensionPointIdentifier: com.apple.widgetkit-extension
-    sources: [Sources/NeoWidgetExtension]
+    sources:
+      - Sources/NeoWidgetExtension
+      - Sources/Shared
     resources: [Sources/NeoWidgetExtension/Resources]
     settings:
       CODE_SIGN_IDENTITY: "-"
