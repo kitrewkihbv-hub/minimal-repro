@@ -2,31 +2,13 @@ import SwiftUI
 import WidgetKit
 import Foundation
 
-public struct CodableColor: Codable, Equatable {
+// MARK: - CodableColor
+
+public struct CodableColor: Codable, Equatable, Hashable {
     public var red: Double
     public var green: Double
     public var blue: Double
     public var opacity: Double
-
-    public init(_ color: Color, opacity: Double = 1.0) {
-        // Best-effort extraction for common static colors; fallback to cyan.
-        // For runtime ColorPicker values, we store via the explicit init below.
-        self.red = 0
-        self.green = 1
-        self.blue = 1
-        self.opacity = opacity
-        // Map known preset colors
-        switch color {
-        case .cyan:   self = CodableColor(red: 0, green: 1, blue: 1, opacity: opacity)
-        case .purple: self = CodableColor(red: 0.5, green: 0, blue: 0.5, opacity: opacity)
-        case .blue:   self = CodableColor(red: 0, green: 0, blue: 1, opacity: opacity)
-        case .green:  self = CodableColor(red: 0, green: 1, blue: 0, opacity: opacity)
-        case .red:    self = CodableColor(red: 1, green: 0, blue: 0, opacity: opacity)
-        case .white:  self = CodableColor(red: 1, green: 1, blue: 1, opacity: opacity)
-        case .clear:  self = CodableColor(red: 0, green: 0, blue: 0, opacity: 0)
-        default:      self = CodableColor(red: 0, green: 1, blue: 1, opacity: opacity)
-        }
-    }
 
     public init(red: Double, green: Double, blue: Double, opacity: Double = 1.0) {
         self.red = red
@@ -35,142 +17,249 @@ public struct CodableColor: Codable, Equatable {
         self.opacity = opacity
     }
 
+    public init(_ color: Color, opacity: Double = 1.0) {
+        #if canImport(AppKit)
+        let ns = NSColor(color).usingColorSpace(.sRGB) ?? NSColor(cyan)
+        self.red = Double(ns.redComponent)
+        self.green = Double(ns.greenComponent)
+        self.blue = Double(ns.blueComponent)
+        self.opacity = Double(ns.alphaComponent) * opacity
+        #else
+        self.red = 0; self.green = 1; self.blue = 1; self.opacity = opacity
+        #endif
+    }
+
     public var color: Color {
         Color(.sRGB, red: red, green: green, blue: blue, opacity: opacity)
     }
 
-    public static let cyan = CodableColor(red: 0, green: 1, blue: 1)
-    public static let purple = CodableColor(red: 0.5, green: 0, blue: 0.5)
-    public static let blue = CodableColor(red: 0, green: 0, blue: 1)
-    public static let green = CodableColor(red: 0, green: 1, blue: 0)
-    public static let red = CodableColor(red: 1, green: 0, blue: 0)
-    public static let white = CodableColor(red: 1, green: 1, blue: 1)
-    public static let clear = CodableColor(red: 0, green: 0, blue: 0, opacity: 0)
+    public static let cyan    = CodableColor(red: 0.0, green: 0.94, blue: 1.0)
+    public static let magenta = CodableColor(red: 1.0, green: 0.0, blue: 0.78)
+    public static let purple  = CodableColor(red: 0.62, green: 0.2, blue: 1.0)
+    public static let blue    = CodableColor(red: 0.2, green: 0.45, blue: 1.0)
+    public static let green   = CodableColor(red: 0.2, green: 1.0, blue: 0.6)
+    public static let red     = CodableColor(red: 1.0, green: 0.22, blue: 0.35)
+    public static let orange  = CodableColor(red: 1.0, green: 0.55, blue: 0.1)
+    public static let yellow  = CodableColor(red: 1.0, green: 0.92, blue: 0.2)
+    public static let white   = CodableColor(red: 1.0, green: 1.0, blue: 1.0)
+    public static let black   = CodableColor(red: 0.0, green: 0.0, blue: 0.0)
+    public static let clear   = CodableColor(red: 0.0, green: 0.0, blue: 0.0, opacity: 0.0)
 }
 
-public struct WidgetConfig: Codable {
-    public var name: String
-    public var type: WidgetType
-    public var elements: [WidgetElement]
+// MARK: - Enums
 
-    public init(name: String, type: WidgetType, elements: [WidgetElement]) {
-        self.name = name
-        self.type = type
-        self.elements = elements
+public enum WidgetType: String, Codable, CaseIterable, Identifiable {
+    case clock
+    case analogClock
+    case media
+    case weather
+    case stats
+    case text
+    case shape
+    case image
+    case dashboard
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .clock: return "Tall Stretchable Clock"
+        case .analogClock: return "Analog Clock"
+        case .media: return "Live Music Player"
+        case .weather: return "Live Weather Card"
+        case .stats: return "System Stats"
+        case .text: return "Custom Text"
+        case .shape: return "Neon Shape/Box"
+        case .image: return "Custom Image/GIF"
+        case .dashboard: return "Dashboard"
+        }
+    }
+
+    public var icon: String {
+        switch self {
+        case .clock: return "clock.fill"
+        case .analogClock: return "timer"
+        case .media: return "music.note.list"
+        case .weather: return "cloud.sun.fill"
+        case .stats: return "chart.bar.fill"
+        case .text: return "textformat"
+        case .shape: return "square.on.circle"
+        case .image: return "photo"
+        case .dashboard: return "square.grid.2x2"
+        }
     }
 }
 
-public enum WidgetType: String, Codable {
-    case clock, media, weather, stats, image, dashboard
+public enum GradientDirection: String, Codable, CaseIterable, Identifiable {
+    case vertical, horizontal, diagonalDown, diagonalUp
+    public var id: String { rawValue }
+
+    public var start: UnitPoint {
+        switch self {
+        case .vertical: return .top
+        case .horizontal: return .leading
+        case .diagonalDown: return .topLeading
+        case .diagonalUp: return .bottomLeading
+        }
+    }
+    public var end: UnitPoint {
+        switch self {
+        case .vertical: return .bottom
+        case .horizontal: return .trailing
+        case .diagonalDown: return .bottomTrailing
+        case .diagonalUp: return .topTrailing
+        }
+    }
 }
 
-public struct WidgetElement: Codable, Identifiable {
-    public var id = UUID()
+// MARK: - WidgetElement
+
+public struct WidgetElement: Codable, Identifiable, Equatable {
+    public var id: UUID
     public var type: WidgetType
     public var content: String
-    public var neonColor: CodableColor? = nil
-    public var glassBlur: CGFloat = 0
-    public var scaleX: CGFloat = 1
-    public var scaleY: CGFloat = 1
-    public var zIndex: Int = 0
+    public var x: CGFloat
+    public var y: CGFloat
+    public var width: CGFloat
+    public var height: CGFloat
+    public var scaleX: CGFloat
+    public var scaleY: CGFloat
+    public var rotation: Double
+    public var zIndex: Int
+    public var locked: Bool
+    public var visible: Bool
 
-    public init(id: UUID = UUID(), type: WidgetType, content: String, neonColor: CodableColor? = nil, glassBlur: CGFloat = 0, scaleX: CGFloat = 1, scaleY: CGFloat = 1, zIndex: Int = 0) {
+    // Text / font
+    public var fontName: String
+    public var fontSize: CGFloat
+    public var fontWeight: String
+    public var textColor: CodableColor
+
+    // Fill / gradient
+    public var fillColor: CodableColor
+    public var useGradient: Bool
+    public var gradientColor2: CodableColor
+    public var gradientDirection: GradientDirection
+
+    // Neon / glow
+    public var neonEnabled: Bool
+    public var neonColor: CodableColor
+    public var neonRadius: CGFloat
+    public var neonIntensity: Double
+
+    // Glass / background
+    public var glassBlur: CGFloat
+    public var cornerRadius: CGFloat
+    public var backgroundOpacity: Double
+    public var borderWidth: CGFloat
+    public var borderColor: CodableColor
+
+    // Image
+    public var imagePath: String?
+
+    public init(
+        id: UUID = UUID(),
+        type: WidgetType,
+        content: String = "",
+        x: CGFloat = 160,
+        y: CGFloat = 120,
+        width: CGFloat = 180,
+        height: CGFloat = 80,
+        scaleX: CGFloat = 1,
+        scaleY: CGFloat = 1,
+        rotation: Double = 0,
+        zIndex: Int = 0,
+        locked: Bool = false,
+        visible: Bool = true,
+        fontName: String = "SF Pro Display",
+        fontSize: CGFloat = 36,
+        fontWeight: String = "bold",
+        textColor: CodableColor = .white,
+        fillColor: CodableColor = CodableColor(red: 0.08, green: 0.08, blue: 0.12, opacity: 0.6),
+        useGradient: Bool = false,
+        gradientColor2: CodableColor = .purple,
+        gradientDirection: GradientDirection = .diagonalDown,
+        neonEnabled: Bool = true,
+        neonColor: CodableColor = .cyan,
+        neonRadius: CGFloat = 12,
+        neonIntensity: Double = 0.8,
+        glassBlur: CGFloat = 0,
+        cornerRadius: CGFloat = 16,
+        backgroundOpacity: Double = 0.35,
+        borderWidth: CGFloat = 0,
+        borderColor: CodableColor = .clear,
+        imagePath: String? = nil
+    ) {
         self.id = id
         self.type = type
         self.content = content
-        self.neonColor = neonColor
-        self.glassBlur = glassBlur
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
         self.scaleX = scaleX
         self.scaleY = scaleY
+        self.rotation = rotation
         self.zIndex = zIndex
+        self.locked = locked
+        self.visible = visible
+        self.fontName = fontName
+        self.fontSize = fontSize
+        self.fontWeight = fontWeight
+        self.textColor = textColor
+        self.fillColor = fillColor
+        self.useGradient = useGradient
+        self.gradientColor2 = gradientColor2
+        self.gradientDirection = gradientDirection
+        self.neonEnabled = neonEnabled
+        self.neonColor = neonColor
+        self.neonRadius = neonRadius
+        self.neonIntensity = neonIntensity
+        self.glassBlur = glassBlur
+        self.cornerRadius = cornerRadius
+        self.backgroundOpacity = backgroundOpacity
+        self.borderWidth = borderWidth
+        self.borderColor = borderColor
+        self.imagePath = imagePath
+    }
+
+    public var swiftUIFontWeight: Font.Weight {
+        switch fontWeight.lowercased() {
+        case "ultralight": return .ultraLight
+        case "thin": return .thin
+        case "light": return .light
+        case "regular": return .regular
+        case "medium": return .medium
+        case "semibold": return .semibold
+        case "bold": return .bold
+        case "heavy": return .heavy
+        case "black": return .black
+        default: return .bold
+        }
     }
 }
 
-// Shared Data Store (App Group / Shared Container)
-public class WidgetStore: ObservableObject {
-    @Published public var currentSlotId: String = "Slot 1"
-    @Published public var slots: [String: WidgetConfig] = [:]
-    public let containerURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("NeoWidget")
+// MARK: - WidgetConfig
 
-    public init() {
-        loadPresets()
-    }
+public struct WidgetConfig: Codable, Equatable {
+    public var name: String
+    public var type: WidgetType
+    public var elements: [WidgetElement]
+    public var canvasWidth: CGFloat
+    public var canvasHeight: CGFloat
 
-    public func loadPresets() {
-        // 8 Built-in Presets
-        slots["Slot 1"] = WidgetConfig(name: "Tall Neon Cyber Clock", type: .clock, elements: [WidgetElement(type: .clock, content: "$df(hh:mm)$", neonColor: .cyan, scaleX: 1, scaleY: 2)])
-        slots["Slot 2"] = WidgetConfig(name: "Ultra-Long Vertical Digital Clock", type: .clock, elements: [WidgetElement(type: .clock, content: "$df(hh:mm)$", neonColor: .purple, scaleX: 0.5, scaleY: 3)])
-        slots["Slot 3"] = WidgetConfig(name: "Glass Apple Music/Spotify Player", type: .media, elements: [WidgetElement(type: .media, content: "Track - Artist", glassBlur: 10)])
-        slots["Slot 4"] = WidgetConfig(name: "Neon Weather Card", type: .weather, elements: [WidgetElement(type: .weather, content: "22°C", neonColor: .blue)])
-        slots["Slot 5"] = WidgetConfig(name: "Retro System Stats", type: .stats, elements: [WidgetElement(type: .stats, content: "CPU: 12% | RAM: 4GB", neonColor: .green)])
-        slots["Slot 6"] = WidgetConfig(name: "Aesthetic Photo Frame", type: .image, elements: [WidgetElement(type: .image, content: "photo.png", glassBlur: 0)])
-        slots["Slot 7"] = WidgetConfig(name: "Minimal Analog Neon Clock", type: .clock, elements: [WidgetElement(type: .clock, content: "Analog", neonColor: .red, scaleX: 1, scaleY: 1)])
-        slots["Slot 8"] = WidgetConfig(name: "All-in-One Cyber Dashboard", type: .dashboard, elements: [
-            WidgetElement(type: .clock, content: "$df(hh:mm)$", neonColor: .cyan),
-            WidgetElement(type: .weather, content: "22°C", neonColor: .blue),
-            WidgetElement(type: .media, content: "Track", glassBlur: 5)
-        ])
-        save()
-    }
-
-    public func save() {
-        // Save to ~/Library/Application Support/NeoWidget/
-        do {
-            try FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true)
-            let data = try JSONEncoder().encode(slots)
-            try data.write(to: containerURL.appendingPathComponent("data.json"))
-            WidgetCenter.shared.reloadAllTimelines()
-        } catch {
-            print("Failed to save widget data: \(error)")
-        }
-    }
-
-    public func exportCurrent() {
-        // Export .neowidget logic
-        print("Exporting .neowidget for \(currentSlotId)")
-    }
-
-    public func importCurrent() {
-        // Import .neowidget logic
-        print("Importing .neowidget")
+    public init(name: String, type: WidgetType, elements: [WidgetElement], canvasWidth: CGFloat = 360, canvasHeight: CGFloat = 360) {
+        self.name = name
+        self.type = type
+        self.elements = elements
+        self.canvasWidth = canvasWidth
+        self.canvasHeight = canvasHeight
     }
 }
 
-public struct ElementView: View {
-    public var element: WidgetElement
+// MARK: - Slot container
 
-    public init(element: WidgetElement) {
-        self.element = element
-    }
-
-    public var body: some View {
-        Group {
-            if element.type == .clock {
-                Text("$df(hh:mm)$")
-                    .font(.system(size: 40, weight: .bold, design: .monospaced))
-            } else if element.type == .media {
-                VStack {
-                    Text("🎵 Track Title")
-                    Text("Artist Name")
-                    ProgressView(value: 0.5)
-                }
-                .padding()
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(15)
-            } else if element.type == .weather {
-                Text("☁️ 22°C")
-                    .font(.title)
-            } else if element.type == .stats {
-                Text("CPU: 12% | RAM: 4GB")
-                    .font(.system(.caption, design: .monospaced))
-            } else if element.type == .image {
-                Image(systemName: "photo")
-                    .resizable()
-                    .frame(width: 100, height: 100)
-            } else {
-                Text("Dashboard")
-            }
-        }
-        .foregroundColor(element.neonColor?.color ?? .white)
-    }
+public struct SlotData: Codable {
+    public var slots: [String: WidgetConfig]
+    public init(slots: [String: WidgetConfig] = [:]) { self.slots = slots }
 }
