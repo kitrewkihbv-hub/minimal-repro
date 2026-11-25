@@ -1,0 +1,50 @@
+name: Build DMG
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-dmg:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build NeoWidget.app
+        run: |
+          xcodebuild \
+            -project NeoWidget.xcodeproj \
+            -scheme NeoWidget \
+            -configuration Release \
+            -arch arm64 \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package DMG
+        run: |
+          mkdir -p dist
+          APP_PATH="build/Build/Products/Release/NeoWidget.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "NeoWidget.app not found at $APP_PATH"
+            find build -name "*.app" -maxdepth 6 -print
+            exit 1
+          fi
+          hdiutil create -volname "NeoWidget" -srcfolder "$APP_PATH" -ov -format UDZO "dist/NeoWidget.dmg"
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeoWidget-dmg
+          path: dist/NeoWidget.dmg
+          if-no-files-found: error

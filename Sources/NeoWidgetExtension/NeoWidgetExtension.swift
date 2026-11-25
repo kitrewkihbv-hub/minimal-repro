@@ -1,6 +1,9 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
+#if canImport(NeoWidgetShared)
+import NeoWidgetShared
+#endif
 
 struct NeoWidgetEntry: TimelineEntry {
     let date: Date
@@ -104,7 +107,7 @@ struct NeoWidgetView: View {
                 ForEach(config.elements) { element in
                     ElementView(element: element)
                         .scaleEffect(x: element.scaleX, y: element.scaleY)
-                        .shadow(color: element.neonColor ?? .clear, radius: 10)
+                        .shadow(color: element.neonColor?.color ?? .clear, radius: 10)
                         .blur(radius: element.glassBlur)
                 }
             } else {

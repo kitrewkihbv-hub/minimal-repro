@@ -11,9 +11,15 @@ let package = Package(
     .library(name: "NeoWidgetExtensionLib", targets: ["NeoWidgetExtension"])
   ],
   targets: [
+    .target(
+      name: "NeoWidgetShared",
+      dependencies: [],
+      path: "Sources/Shared"
+    ),
     .executableTarget(
       name: "NeoWidget",
       dependencies: [
+        .target(name: "NeoWidgetShared"),
         .target(name: "NeoWidgetExtension")
       ],
       path: "Sources/NeoWidget",
@@ -23,7 +29,9 @@ let package = Package(
     ),
     .target(
       name: "NeoWidgetExtension",
-      dependencies: [],
+      dependencies: [
+        .target(name: "NeoWidgetShared")
+      ],
       path: "Sources/NeoWidgetExtension",
       resources: [
         .process("Resources")

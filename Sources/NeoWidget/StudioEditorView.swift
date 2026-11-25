@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(NeoWidgetShared)
+import NeoWidgetShared
+#endif
 
 struct StudioEditorView: View {
     @EnvironmentObject var store: WidgetStore
@@ -62,13 +65,13 @@ struct StudioEditorView: View {
                         ElementView(element: element)
                             .position(x: 200, y: 200) // Simplified drag/stretch logic
                             .scaleEffect(x: element.scaleX, y: element.scaleY)
-                            .shadow(color: element.neonColor ?? .clear, radius: 15, x: 0, y: 0)
+                            .shadow(color: element.neonColor?.color ?? .clear, radius: 15, x: 0, y: 0)
                             .blur(radius: element.glassBlur)
                             .zIndex(Double(element.zIndex))
                             .onTapGesture {
                                 selectedElementId = element.id
                                 // Sync sliders
-                                neonColor = element.neonColor ?? .cyan
+                                neonColor = element.neonColor?.color ?? .cyan
                                 glassBlur = element.glassBlur
                                 scaleX = element.scaleX
                                 scaleY = element.scaleY
@@ -92,61 +95,6 @@ struct StudioEditorView: View {
                 Button("Apply to Desktop Widget") {
                     store.save()
                 }
-            }
-        }
-    }
-}
-
-struct ElementView: View {
-    var element: WidgetElement
-    var body: some View {
-        Group {
-            if element.type == .clock {
-                Text("$df(hh:mm)$")
-                    .font(.system(size: 40, weight: .bold, design: .monospaced))
-            } else if element.type == .media {
-                VStack {
-                    Text("🎵 Track Title")
-                    Text("Artist Name")
-                    ProgressView(value: 0.5)
-                }
-                .padding()
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(15)
-            } else if element.type == .weather {
-                Text("☁️ 22°C")
-                    .font(.title)
-            } else if element.type == .stats {
-                Text("CPU: 12% | RAM: 4GB")
-                    .font(.system(.caption, design: .monospaced))
-            } else if element.type == .image {
-                Image(systemName: "photo")
-                    .resizable()
-                    .frame(width: 100, height: 100)
-            } else {
-                Text("Dashboard")
-            }
-        }
-        .foregroundColor(element.neonColor ?? .white)
-    }
-}
-
-struct HandlesOverlay: View {
-    @Binding var scaleX: CGFloat
-    @Binding var scaleY: CGFloat
-    var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                // 8 Handles
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: 0, y: 0) // NW
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: geo.size.width, y: 0) // NE
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: 0, y: geo.size.height) // SW
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: geo.size.width, y: geo.size.height) // SE
-                // Edge handles
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: geo.size.width/2, y: 0) // N
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: geo.size.width/2, y: geo.size.height) // S
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: 0, y: geo.size.height/2) // W
-                Circle().fill(Color.cyan).frame(width: 10, height: 10).position(x: geo.size.width, y: geo.size.height/2) // E
             }
         }
     }
