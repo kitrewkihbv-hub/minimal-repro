@@ -23,7 +23,7 @@ public final class LiveDataProvider: ObservableObject {
     @Published public var musicArtist: String = "—"
 
     private var weatherLastFetch: Date? = nil
-    private var weatherCache: (temp: String, cond: String)? = nil
+    internal var weatherCache: (temp: String, cond: String)? = nil
     private var timer: Timer?
 
     public init() {

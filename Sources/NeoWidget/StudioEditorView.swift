@@ -178,8 +178,8 @@ struct StudioEditorView: View {
                 fillColor: type == .shape ? CodableColor(red: 0.1, green: 0.1, blue: 0.18, opacity: 0.7) : .clear,
                 neonEnabled: neon != .clear,
                 neonColor: neon, neonRadius: neon == .clear ? 0 : 12, neonIntensity: neon == .clear ? 0 : 0.8,
-                backgroundOpacity: type == .shape ? 0.6 : 0.0,
-                cornerRadius: type == .shape ? 18 : (type == .media ? 16 : 8)
+                cornerRadius: type == .shape ? 18 : (type == .media ? 16 : 8),
+                backgroundOpacity: type == .shape ? 0.6 : 0.0
             )
             store.addElement(el)
         } label: {

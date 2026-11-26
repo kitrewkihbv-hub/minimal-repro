@@ -19,7 +19,7 @@ public struct CodableColor: Codable, Equatable, Hashable {
 
     public init(_ color: Color, opacity: Double = 1.0) {
         #if canImport(AppKit)
-        let ns = NSColor(color).usingColorSpace(.sRGB) ?? NSColor(cyan)
+        let ns = NSColor(color).usingColorSpace(.sRGB) ?? NSColor(SwiftUI.Color.cyan)
         self.red = Double(ns.redComponent)
         self.green = Double(ns.greenComponent)
         self.blue = Double(ns.blueComponent)
