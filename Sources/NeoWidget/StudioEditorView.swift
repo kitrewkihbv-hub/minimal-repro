@@ -695,7 +695,7 @@ struct StudioEditorView: View {
     private func labeledField(_ label: String, value: Binding<CGFloat>) -> some View {
         HStack(spacing: 4) {
             Text(label).font(.caption).foregroundStyle(.secondary)
-            TextField(label, value: value, format: .number)
+            TextField(label, value: Binding(get: { Double(value.wrappedValue) }, set: { value.wrappedValue = CGFloat($0) }), format: .number)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 72)
         }
